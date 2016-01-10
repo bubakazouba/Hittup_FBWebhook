@@ -1,0 +1,26 @@
+{
+  "name": "Hittup_FBWebhook",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webhook.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bubakazouba/Hittup_FBWebhook.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bubakazouba/Hittup_FBWebhook/issues"
+  },
+  "homepage": "https://github.com/bubakazouba/Hittup_FBWebhook",
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "express": "^4.13.3",
+    "mongodb": "^2.1.3",
+    "winston": "^2.1.1",
+    "winston-papertrail": "^1.0.2"
+  }
+}
