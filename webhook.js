@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var mongoClient = require('mongodb').MongoClient,
     ObjectID = require('mongodb').ObjectID
 var winston = require('winston');
+var mongodb = require('./modules/db');
 
 require('winston-papertrail').Papertrail;
 
@@ -26,7 +27,7 @@ var app = express();
 
 app.use(bodyParser.json());
 
-mongoClient.connect("mongodb://Hittup:katyCherry1738@ds033865.mongolab.com:33865/hittupsahmoudtest", function(err, db) {
+mongoClient.connect("mongodb://Hittup:katyCherry1738@ds043981.mongolab.com:43981/hittup", function(err, db) {
     if (err) {
         console.log(err);
         return(err);
