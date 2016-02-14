@@ -65,15 +65,13 @@ app.post('/',function(req,res){
         var fbid = entries[i].id;
         //what if user comes with new facebook friend 
         var query = User.findOne({fbid: fbid});
-        console.log("before query.exec");
         query.exec(function (err, userFound){
             if(err){
                 console.log("couldnt get user");//log error
                 return;
             }
-            console.log("im inside first query.exec")
             var fbToken = userFound.fbToken;
-            console.log("success found uer in DB, got the fbToken="+fbToken);
+            console.log("fbid="+fbid+",success found user in DB, got the fbToken="+fbToken);
             Facebook.getFbData(fbToken, function (err, firstName, lastName, friends) {
                 if(err){
                     Logger.log(err.message,req.connection.remoteAddress, null, "webhook");
@@ -83,16 +81,16 @@ app.post('/',function(req,res){
                 for (var i = friends.length - 1; i >= 0; i--) {
                     fbids.push(friends[i].id);
                 }
-                console.log("success found friends  from facebook= "+fbid)
+                console.log("fbid="+fbid+", success found friends from facebook= "+fbids)
                 var query = User.find({fbid: { $in: fbids }});
 
                 query.exec(function (err,userFriends) {
                     if(err) {
-                        console.log("erorr="+err.message);
+                        console.log("error="+err.message);
                         //Log error
                         return;
                     }
-                    console.log("success found friends in DB");
+                    console.log("fbid="+fbid+",success found friends in DB");
                     var fbFriends = [];
                     for (var i = userFriends.length - 1; i >= 0; i--) {
                         fbFriends.push(userFriends[i]._id);
