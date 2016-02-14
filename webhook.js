@@ -1,12 +1,12 @@
-var fs = require('fs');
-var express = require('express');
-var bodyParser = require('body-parser');
-var mongoClient = require('mongodb').MongoClient,
-    ObjectID = require('mongodb').ObjectID
-var winston = require('winston');
-var mongodb = require('./modules/db');
-var Logger = require('../modules/Logger');
-var Facebook = require('../modules/facebook');
+var fs = require('fs'),
+    express = require('express'),
+    bodyParser = require('body-parser'),
+    mongoClient = require('mongodb').MongoClient,
+    ObjectID = require('mongodb').ObjectID,
+    winston = require('winston'),
+    mongodb = require('./modules/db'),
+    Logger = require('./modules/Logger'),
+    Facebook = require('./modules/facebook');
 
 
 require('winston-papertrail').Papertrail;
@@ -57,48 +57,59 @@ app.post('/',function(req,res){
         return;//log error
     }
 
-    var entries = req.body.entries;
+    var entries = req.body.entry;
     for (var i = entries.length - 1; i >= 0; i--) {
         if(!entries[i].hasOwnProperty("id")){
             return;//log error
         }
 
         var fbid = entries[i].id;
-
-        Facebook.getFbData(req.body.fbToken, function (err, firstName, lastName, friends) {
+        //what if user comes with new facebook friend 
+        var query = User.findOne({fbid: fbid});
+        query.exec(function (err, user){
             if(err){
-                Logger.log(err.message,req.connection.remoteAddress, null, "webhook");
+                console.log("couldnt get user");//log error
                 return;
             }
-            res.sendStatus(200);
-            var fbids = [];
-            for (var i = friends.length - 1; i >= 0; i--) {
-                fbids.push(friends[i].id);
-            }
-            
-            var query = User.find({fbid: { $in: fbids }});
-
-            query.exec(function (err,userFriends) {
-                if(err) {
-                    res.send({"success": "false", "error": err.message});
+            var fbToken = user.fbToken;
+            console.log("success found uer in DB, got the fbToken="+fbToken);
+            Facebook.getFbData(fbToken, function (err, firstName, lastName, friends) {
+                if(err){
+                    Logger.log(err.message,req.connection.remoteAddress, null, "webhook");
                     return;
                 }
-                var fbFriends = [];
-                for (var i = userFriends.length - 1; i >= 0; i--) {
-                    fbFriends.push(userFriends[i]._id);
+                res.sendStatus(200);
+                var fbids = [];
+                for (var i = friends.length - 1; i >= 0; i--) {
+                    fbids.push(friends[i].id);
                 }
-                var user = new User({
-                    fbFriends: fbFriends
-                });
+                console.log("success found friends  from facebook= "+fbid)
+                var query = User.find({fbid: { $in: fbids }});
 
-                user.update(function (err,updatedUser) {
-                    if(err){
-                        Logger.log(err.message,req.connection.remoteAddress, null, "update user in webhook");
+                query.exec(function (err,userFriends) {
+                    if(err) {
+                        console.log("erorr="+err.message);
+                        //Log error
+                        return;
                     }
-                    console.log("updated user successfully");
-                });//end update user
-            });//end look for friends
-        });//end get friends from facebook
+                    console.log("success found friends in DB");
+                    var fbFriends = [];
+                    for (var i = userFriends.length - 1; i >= 0; i--) {
+                        fbFriends.push(userFriends[i]._id);
+                    }
+                    var user = new User({
+                        fbFriends: fbFriends
+                    });
+
+                    user.update(function (err,updatedUser) {
+                        if(err){
+                            Logger.log(err.message,req.connection.remoteAddress, null, "update user in webhook");
+                        }
+                        console.log("updated user successfully");
+                    });//end update user
+                });//end look for friends
+            });//end get friends from facebook
+        });//end get user's fb token
 
     }
 
