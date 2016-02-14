@@ -37,8 +37,6 @@ mongodb.connect("mongodb://Hittup:katyCherry1738@ds043981.mongolab.com:43981/hit
         return(err);
       }
       else{
-        mongoDatabase = db;
-        userCollection = mongoDatabase.collection("Users");
         console.log("DB Connected");
   }
 });
@@ -81,7 +79,6 @@ app.post('/',function(req,res){
                     Logger.log(err.message,req.connection.remoteAddress, null, "webhook");
                     return;
                 }
-                res.sendStatus(200);
                 var fbids = [];
                 for (var i = friends.length - 1; i >= 0; i--) {
                     fbids.push(friends[i].id);
