@@ -5,6 +5,9 @@ var mongoClient = require('mongodb').MongoClient,
     ObjectID = require('mongodb').ObjectID
 var winston = require('winston');
 var mongodb = require('./modules/db');
+var Logger = require('../modules/Logger');
+var Facebook = require('../modules/facebook');
+
 
 require('winston-papertrail').Papertrail;
 
@@ -35,7 +38,7 @@ mongoClient.connect("mongodb://Hittup:katyCherry1738@ds043981.mongolab.com:43981
       else{
         mongoDatabase = db;
         userCollection = mongoDatabase.collection("Users");
-        console.log("connected to db: " + db);
+        console.log("DB Connected");
   }
 });
 
@@ -50,56 +53,56 @@ app.post('/',function(req,res){
     });
 
     var body=req.body;
-    if(!(body.hasOwnProperty("entry") && body.entry.length == 2)){
-        return;
+    if(!body.hasOwnProperty("entry")){
+        return;//log error
     }
-    for (var i = body.entry.length - 1; i >= 0; i--) {
-        if(!body.entry[i].hasOwnProperty("id")){
-            return
-        }
-    };
-    var user0id = body.entry[0].id;
-    var user1id = body.entry[1].id;
-    
-    userCollection.find({$or: [{fbid: user0id}, {fbid: user1id}] }).toArray(function(error,docs){
 
-        if(error){
-            fs.appendFile(filePath+'.txt', error.message, function (error) {
-                if(error){
-                    paperTrailLogger.info('ERROR while writing: '+error.message);
-                }
-            });
-            return;
+    var entries = req.body.entries;
+    for (var i = entries.length - 1; i >= 0; i--) {
+        if(!entries[i].hasOwnProperty("id")){
+            return;//log error
         }
 
-        for (var i = docs.length - 1; i >= 0; i--) {
-            var otherUser = docs[1-i];
-            var shouldUpdate = true;
-            if(docs[i].hasOwnProperty("fbFriends")){
-                for (var j = docs[i]["fbFriends"].length - 1; j >= 0; j--) {
-                    if(docs[i]["fbFriends"][j]._id.toString()==otherUser._id.toString())
-                        shouldUpdate = false;
-                }
+        var fbid = entries[i].id;
+
+        Facebook.getFbData(req.body.fbToken, function (err, firstName, lastName, friends) {
+            if(err){
+                Logger.log(err.message,req.connection.remoteAddress, null, "webhook");
+                return;
             }
+            res.sendStatus(200);
+            var fbids = [];
+            for (var i = friends.length - 1; i >= 0; i--) {
+                fbids.push(friends[i].id);
+            }
+            
+            var query = User.find({fbid: { $in: fbids }});
 
-            if (shouldUpdate){
-                userCollection.update(
-                    {
-                        fbid: docs[i].fbid
-                    },
-                    { 
-                        $push: {
-                            fbFriends: { 'fbid': otherUser.fbid, '_id': otherUser._id, 
-                            'firstName': otherUser.firstName, 'lastName': otherUser.lastName,
-                            'loc': otherUser.loc}
-                        }
-                    });
-            }//end if should update
-        }//end for
-    });
+            query.exec(function (err,userFriends) {
+                if(err) {
+                    res.send({"success": "false", "error": err.message});
+                    return;
+                }
+                var fbFriends = [];
+                for (var i = userFriends.length - 1; i >= 0; i--) {
+                    fbFriends.push(userFriends[i]._id);
+                }
+                var user = new User({
+                    fbFriends: fbFriends
+                });
 
-    res.writeHead(200);
-    res.end();
+                user.update(function (err,updatedUser) {
+                    if(err){
+                        Logger.log(err.message,req.connection.remoteAddress, null, "update user in webhook");
+                    }
+                    console.log("updated user successfully");
+                });//end update user
+            });//end look for friends
+        });//end get friends from facebook
+
+    }
+
+    res.sendStatus(200);
 });
 
 
