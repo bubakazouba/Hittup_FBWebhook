@@ -1,13 +1,13 @@
 var fs = require('fs'),
     express = require('express'),
     bodyParser = require('body-parser'),
-    mongoClient = require('mongodb').MongoClient,
     ObjectID = require('mongodb').ObjectID,
     winston = require('winston'),
     mongodb = require('./modules/db'),
     Logger = require('./modules/Logger'),
     User = require('./models/Users'),
-    Facebook = require('./modules/facebook');
+    Facebook = require('./modules/facebook'),
+    mongodb = require('./modules/db');
 
 
 require('winston-papertrail').Papertrail;
@@ -31,7 +31,7 @@ var app = express();
 
 app.use(bodyParser.json());
 
-mongoClient.connect("mongodb://Hittup:katyCherry1738@ds043981.mongolab.com:43981/hittup", function(err, db) {
+mongodb.connect("mongodb://Hittup:katyCherry1738@ds043981.mongolab.com:43981/hittup", function(err, db) {
     if (err) {
         console.log(err);
         return(err);
