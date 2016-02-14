@@ -99,7 +99,12 @@ app.post('/',function(req,res){
                         fbFriends: fbFriends
                     });
 
-                    user.update(function (err,updatedUser) {
+                    // user.update(function (err,updatedUser) {
+                    User.update({fbid: fbid}, {
+                        $set: {
+                            fbFriends: fbFriends
+                        }
+                    }, function(err, updatedUser){;
                         if(err){
                             Logger.log(err.message,req.connection.remoteAddress, null, "update user in webhook");
                         }
