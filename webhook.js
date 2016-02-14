@@ -6,6 +6,7 @@ var fs = require('fs'),
     winston = require('winston'),
     mongodb = require('./modules/db'),
     Logger = require('./modules/Logger'),
+    User = require('./models/Users'),
     Facebook = require('./modules/facebook');
 
 
@@ -62,16 +63,18 @@ app.post('/',function(req,res){
         if(!entries[i].hasOwnProperty("id")){
             return;//log error
         }
-
+        console.log(req.body);
         var fbid = entries[i].id;
         //what if user comes with new facebook friend 
         var query = User.findOne({fbid: fbid});
-        query.exec(function (err, user){
+        console.log("before query.exec");
+        query.exec(function (err, userFound){
             if(err){
                 console.log("couldnt get user");//log error
                 return;
             }
-            var fbToken = user.fbToken;
+            console.log("im inside first query.exec")
+            var fbToken = userFound.fbToken;
             console.log("success found uer in DB, got the fbToken="+fbToken);
             Facebook.getFbData(fbToken, function (err, firstName, lastName, friends) {
                 if(err){
