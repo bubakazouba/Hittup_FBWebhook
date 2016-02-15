@@ -10,7 +10,7 @@ var fs = require('fs'),
     mongodb = require('./modules/db');
 
 
-require('winston-papertrail').Papertrail;
+require('winston-papertrail').foPapertrail;
 
 var paperTrailLogger = new winston.Logger({
     transports: [
@@ -62,14 +62,14 @@ app.post('/',function(req,res){
         if(!entries[i].hasOwnProperty("id")){
             return;//log error
         }
-        var fbid = entries[i].id;
         //what if user comes with new facebook friend 
-        var query = User.findOne({fbid: fbid});
+        var query = User.findOne({fbid: entries[i].id});
         query.exec(function (err, userFound){
             if(err){
                 console.log("couldnt get user");//log error
                 return;
             }
+            var fbid = userFound.fbid;
             var fbToken = userFound.fbToken;
             console.log("fbid="+fbid+",success found user in DB, got the fbToken="+fbToken);
             Facebook.getFbData(fbToken, function (err, firstName, lastName, friends) {
@@ -81,7 +81,7 @@ app.post('/',function(req,res){
                 for (var j = friends.length - 1; j >= 0; j--) {
                     fbids.push(friends[j].id);
                 }
-                console.log("fbid="+fbid+", success found friends from facebook= "+fbids)
+                console.log("fbid="+fbid+", success found friends from facebook= "+fbids);
                 var query = User.find({fbid: { $in: fbids }});
 
                 query.exec(function (err,userFriends) {
@@ -92,8 +92,8 @@ app.post('/',function(req,res){
                     }
                     console.log("fbid="+fbid+",success found friends in DB");
                     var fbFriends = [];
-                    for (var i = userFriends.length - 1; i >= 0; i--) {
-                        fbFriends.push(userFriends[i]._id);
+                    for (var j = userFriends.length - 1; j >= 0; j--) {
+                        fbFriends.push(userFriends[j]._id);
                     }
                     var user = new User({
                         fbFriends: fbFriends
@@ -104,7 +104,7 @@ app.post('/',function(req,res){
                         $set: {
                             fbFriends: fbFriends
                         }
-                    }, function(err, updatedUser){;
+                    }, function(err, updatedUser){
                         if(err){
                             Logger.log(err.message,req.connection.remoteAddress, null, "update user in webhook");
                         }
