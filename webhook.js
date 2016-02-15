@@ -57,11 +57,11 @@ app.post('/',function(req,res){
     }
 
     var entries = req.body.entry;
+    console.log(req.body);
     for (var i = entries.length - 1; i >= 0; i--) {
         if(!entries[i].hasOwnProperty("id")){
             return;//log error
         }
-        console.log(req.body);
         var fbid = entries[i].id;
         //what if user comes with new facebook friend 
         var query = User.findOne({fbid: fbid});
@@ -78,8 +78,8 @@ app.post('/',function(req,res){
                     return;
                 }
                 var fbids = [];
-                for (var i = friends.length - 1; i >= 0; i--) {
-                    fbids.push(friends[i].id);
+                for (var j = friends.length - 1; j >= 0; j--) {
+                    fbids.push(friends[j].id);
                 }
                 console.log("fbid="+fbid+", success found friends from facebook= "+fbids)
                 var query = User.find({fbid: { $in: fbids }});
